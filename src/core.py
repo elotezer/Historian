@@ -31,12 +31,22 @@ scheduler = AsyncIOScheduler()
 @bot.event
 async def on_ready():
     logger.info(f"Historian is online as {bot.user}")
+
+    guild_id = os.getenv("GUILD_ID")
+    if not guild_id:
+        raise ValueError("GUILD_ID not set in .env")
+
+    guild = discord.Object(id=int(guild_id))
+
     await bot.load_extension("cogs.listener")
     await bot.load_extension("cogs.recap")
     await bot.load_extension("cogs.commands")
+
+    bot.tree.copy_global_to(guild=guild)
+    synced = await bot.tree.sync(guild=guild)
+    logger.info(f"Synced {len(synced)} slash commands to guild {guild_id}")
+
     scheduler.start()
-    synced = await bot.tree.sync()
-    logger.info(f"Synced {len(synced)} slash commands")
 
 
 if __name__ == "__main__":
