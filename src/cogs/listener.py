@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from storage.database import Database
+from database import Database
 import logging
 
 logger = logging.getLogger("historian.listener")
