@@ -22,9 +22,9 @@ scheduler = AsyncIOScheduler()
 @bot.event
 async def on_ready():
     logger.info(f"Historian is online as {bot.user}")
-    await bot.load_extension("src.cogs.listener")
-    await bot.load_extension("src.cogs.recap")
-    await bot.load_extension("src.cogs.commands")
+    await bot.load_extension("cogs.listener")
+    await bot.load_extension("cogs.recap")
+    await bot.load_extension("cogs.commands")
     scheduler.start()
     synced = await bot.tree.sync()
     logger.info(f"Synced {len(synced)} slash commands")
