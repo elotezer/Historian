@@ -83,7 +83,7 @@ Keep the tone fun, celebratory, and community-focused. Use Discord markdown. Avo
 def generate_recap(stats: dict, period_label: str = "weekly") -> str:
     prompt = build_prompt(stats, period_label)
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-1.5-flash",
         contents=prompt,
     )
     return response.text
