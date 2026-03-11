@@ -1,10 +1,10 @@
-import anthropic
+import google.genai as genai
 import os
 import logging
 
 logger = logging.getLogger("historian.ai")
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 def build_prompt(stats: dict, period_label: str) -> str:
@@ -82,11 +82,8 @@ Keep the tone fun, celebratory, and community-focused. Use Discord markdown. Avo
 
 def generate_recap(stats: dict, period_label: str = "weekly") -> str:
     prompt = build_prompt(stats, period_label)
-
-    message = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=1500,
-        messages=[{"role": "user", "content": prompt}],
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
     )
-
-    return message.content[0].text
+    return response.text

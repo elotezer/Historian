@@ -8,7 +8,7 @@ import logging
 import random
 
 from storage.database import Database
-from generator import generate_recap
+from recap.generator import generate_recap
 
 logger = logging.getLogger("historian.recap")
 
@@ -93,7 +93,7 @@ class RecapCog(commands.Cog):
             self.db.save_recap(guild_id, label, recap_text)
         except Exception as e:
             logger.error(f"Recap generation failed: {e}")
-            await channel.send("❌ Failed to generate recap. Check your `ANTHROPIC_API_KEY`.")
+            await channel.send("❌ Failed to generate recap. Check your `GEMINI_API_KEY`.")
             return
 
         chunks = []
