@@ -8,7 +8,7 @@ import logging
 import random
 
 from storage.database import Database
-from recap.generator import generate_recap
+from generator import generate_recap
 
 logger = logging.getLogger("historian.recap")
 
