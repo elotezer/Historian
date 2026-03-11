@@ -2,7 +2,11 @@ import sys
 import os
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+src_dir = Path(__file__).parent
+cogs_dir = src_dir / "cogs"
+
+sys.path.insert(0, str(src_dir))
+sys.path.insert(0, str(cogs_dir))
 
 import discord
 from discord.ext import commands

@@ -7,7 +7,7 @@ import os
 import logging
 import random
 
-from cogs.database import Database
+from database import Database
 from generator import generate_recap
 
 logger = logging.getLogger("historian.recap")

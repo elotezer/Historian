@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from cogs.database import Database
+from database import Database
 from datetime import datetime, timedelta, timezone
 import logging
 
@@ -47,7 +47,7 @@ class CommandsCog(commands.Cog):
             rxn_str = "  ".join(reaction_parts)
             embed.add_field(name="🔥 Top Reactions", value=rxn_str, inline=False)
 
-        embed.set_footer(text="Historian • powered by Claude AI")
+        embed.set_footer(text="Historian • powered by Gemini")
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="historian-help", description="How to use Historian")
