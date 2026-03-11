@@ -1,6 +1,11 @@
+import sys
+import os
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
 import discord
 from discord.ext import commands
-import os
 from dotenv import load_dotenv
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
