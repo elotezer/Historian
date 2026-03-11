@@ -7,6 +7,11 @@ import logging
 
 logger = logging.getLogger("historian.commands")
 
+ACCENT = 0x5865F2
+SUCCESS = 0x57F287
+WARNING = 0xFEE75C
+ERROR = 0xED4245
+
 
 class CommandsCog(commands.Cog):
     def __init__(self, bot):
@@ -25,54 +30,91 @@ class CommandsCog(commands.Cog):
         top_reactions = self.db.get_top_reactions(guild_id, start, end)
 
         embed = discord.Embed(
-            title=f"📊 Server Stats — Last {days} Days",
-            color=discord.Color.blurple(),
+            title="Server Activity",
+            description=f"Overview for the past **{days} days**",
+            color=ACCENT,
             timestamp=datetime.now(timezone.utc),
         )
 
-        embed.add_field(name="Total Messages", value=str(len(messages)), inline=True)
+        embed.add_field(
+            name="💬  Messages",
+            value=f"### {len(messages):,}",
+            inline=True,
+        )
+
+        embed.add_field(
+            name="👥  Active Members",
+            value=f"### {len(top_users)}",
+            inline=True,
+        )
+
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         if top_users:
             user_lines = []
+            medals = ["🥇", "🥈", "🥉"]
             for i, user in enumerate(top_users):
-                line = f"`{i + 1}.` **{user['username']}** — {user['msg_count']} msgs"
+                medal = medals[i] if i < 3 else f"`{i + 1}.`"
+                line = f"{medal} **{user['username']}** — {user['msg_count']:,} msgs"
                 user_lines.append(line)
-            users_str = "\n".join(user_lines)
-            embed.add_field(name="🏆 Top Chatters", value=users_str, inline=False)
+            embed.add_field(
+                name="🏆  Top Chatters",
+                value="\n".join(user_lines),
+                inline=True,
+            )
 
         if top_reactions:
             reaction_parts = []
             for reaction in top_reactions:
-                reaction_parts.append(f"{reaction['emoji']} ×{reaction['count']}")
-            rxn_str = "  ".join(reaction_parts)
-            embed.add_field(name="🔥 Top Reactions", value=rxn_str, inline=False)
+                reaction_parts.append(f"{reaction['emoji']} `{reaction['count']}`")
+            embed.add_field(
+                name="🔥  Top Reactions",
+                value="  ".join(reaction_parts),
+                inline=True,
+            )
 
-        embed.set_footer(text="Historian • powered by Gemini")
+        embed.set_author(
+            name=interaction.guild.name,
+            icon_url=interaction.guild.icon.url if interaction.guild.icon else None,
+        )
+        embed.set_footer(text="Historian", icon_url=interaction.client.user.display_avatar.url)
+
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="historian-help", description="How to use Historian")
     async def help_cmd(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="📜 Historian — Help",
-            description="I silently watch your server and produce beautiful recaps of everything that happens.",
-            color=discord.Color.gold(),
+            title="Historian",
+            description="I silently watch your server and every Sunday drop a beautiful AI-written recap of everything that happened.",
+            color=ACCENT,
         )
+
         embed.add_field(
-            name="Commands",
+            name="📋  Commands",
             value=(
-                "`/recap [days]` — Generate a recap (admin only)\n"
-                "`/last-recap` — Show the most recent recap\n"
-                "`/stats [days]` — Quick activity stats\n"
-                "`/historian-help` — This message"
+                "> `/recap [days]` — Generate a recap *(admin only)*\n"
+                "> `/last-recap` — Show the most recent recap\n"
+                "> `/stats [days]` — Activity stats\n"
+                "> `/historian-help` — This message"
             ),
             inline=False,
         )
+
         embed.add_field(
-            name="Automatic Recaps",
-            value="I post a weekly recap every Sunday at 6 PM UTC in your configured channel.",
+            name="🕕  Auto Recaps",
+            value="> Every **Sunday at 6 PM UTC** a recap is posted automatically to your configured channel.",
             inline=False,
         )
-        embed.set_footer(text="Set RECAP_CHANNEL_ID in your .env to configure the auto-recap channel.")
+
+        embed.add_field(
+            name="⚙️  Setup",
+            value="> Set `RECAP_CHANNEL_ID` in your `.env` to enable automatic weekly recaps.",
+            inline=False,
+        )
+
+        embed.set_thumbnail(url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="Powered by Gemini", icon_url=interaction.client.user.display_avatar.url)
+
         await interaction.response.send_message(embed=embed)
 
 

@@ -13,6 +13,8 @@ from generator import generate_recap
 logger = logging.getLogger("historian.recap")
 
 RECAP_CHANNEL_ENV = "RECAP_CHANNEL_ID"
+ACCENT = 0x5865F2
+ERROR = 0xED4245
 
 
 class RecapCog(commands.Cog):
@@ -51,7 +53,11 @@ class RecapCog(commands.Cog):
 
         messages = self.db.get_messages_in_range(guild_id, start, end)
         if not messages:
-            await channel.send("📭 Not enough activity this period to generate a recap!")
+            empty_embed = discord.Embed(
+                description="📭  Not enough activity this period to generate a recap.",
+                color=ERROR,
+            )
+            await channel.send(embed=empty_embed)
             return
 
         sample_size = min(50, len(messages))
@@ -86,22 +92,44 @@ class RecapCog(commands.Cog):
             "events": events_as_dicts,
         }
 
-        await channel.send("📜 *Generating your server recap... one moment!*")
+        loading_embed = discord.Embed(
+            description="📜  Generating your server recap, one moment...",
+            color=ACCENT,
+        )
+        await channel.send(embed=loading_embed)
 
         try:
             recap_text = generate_recap(stats, period_label=label)
             self.db.save_recap(guild_id, label, recap_text)
         except Exception as e:
             logger.error(f"Recap generation failed: {e}")
-            await channel.send("❌ Failed to generate recap. Check your `GEMINI_API_KEY`.")
+            error_embed = discord.Embed(
+                title="Recap Failed",
+                description="Something went wrong while generating the recap. Check your `GEMINI_API_KEY`.",
+                color=ERROR,
+            )
+            await channel.send(embed=error_embed)
             return
 
         chunks = []
-        for i in range(0, len(recap_text), 1900):
-            chunks.append(recap_text[i:i + 1900])
+        for i in range(0, len(recap_text), 4096):
+            chunks.append(recap_text[i:i + 4096])
 
+        first_chunk = True
         for chunk in chunks:
-            await channel.send(chunk)
+            if first_chunk:
+                recap_embed = discord.Embed(
+                    title=f"📜  {label.capitalize()} Recap",
+                    description=chunk,
+                    color=ACCENT,
+                    timestamp=datetime.now(timezone.utc),
+                )
+                recap_embed.set_footer(text="Historian • powered by Gemini")
+                await channel.send(embed=recap_embed)
+                first_chunk = False
+            else:
+                continuation_embed = discord.Embed(description=chunk, color=ACCENT)
+                await channel.send(embed=continuation_embed)
 
     @app_commands.command(name="recap", description="Generate a server recap for the past N days")
     @app_commands.describe(days="Number of days to recap (default: 7)")
@@ -109,21 +137,33 @@ class RecapCog(commands.Cog):
     async def recap_command(self, interaction: discord.Interaction, days: int = 7):
         await interaction.response.defer(thinking=True)
         await self._send_recap(interaction.channel, days=days, label=f"{days}-day")
-        await interaction.followup.send("✅ Recap posted!", ephemeral=True)
+        await interaction.followup.send(
+            embed=discord.Embed(description="✅  Recap posted!", color=0x57F287),
+            ephemeral=True,
+        )
 
     @app_commands.command(name="last-recap", description="Show the last generated recap")
     async def last_recap(self, interaction: discord.Interaction):
         row = self.db.get_last_recap(interaction.guild.id)
         if not row:
-            await interaction.response.send_message("No recaps generated yet. Use `/recap` to create one!")
+            embed = discord.Embed(
+                description="No recaps generated yet. Use `/recap` to create one!",
+                color=0xFEE75C,
+            )
+            await interaction.response.send_message(embed=embed)
             return
 
         generated_timestamp = int(datetime.fromisoformat(row["generated_at"]).timestamp())
-        summary_preview = row["summary"][:1800]
 
-        await interaction.response.send_message(
-            f"**Last recap** (generated <t:{generated_timestamp}:R>):\n\n{summary_preview}"
+        embed = discord.Embed(
+            title="📜  Last Recap",
+            description=row["summary"][:4096],
+            color=ACCENT,
         )
+        embed.set_footer(text=f"Generated")
+        embed.timestamp = datetime.fromisoformat(row["generated_at"])
+
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
